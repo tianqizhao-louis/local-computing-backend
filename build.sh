@@ -16,7 +16,7 @@ then
 
     # Build and run the docker-compose services
     echo "Building and starting services with docker-compose..."
-    docker compose up --build
+    docker-compose up --build
 else
     echo "Docker system prune cancelled."
 fi
