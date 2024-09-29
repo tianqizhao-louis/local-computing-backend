@@ -10,6 +10,9 @@ app = FastAPI(openapi_url="/api/v1/breeders/openapi.json", docs_url="/api/v1/bre
 origins = [
     "http://3.17.156.250",
     "http://3.17.156.250:5432",
+    "http://3.17.156.250:5432",
+    "http://localhost",
+    "http://localhost:3000",
 ]
 
 app.add_middleware(
