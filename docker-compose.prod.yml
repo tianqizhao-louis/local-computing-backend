@@ -31,17 +31,17 @@ services:
     environment:
       - DATABASE_URI=${DATABASE_URL}
       # - CAST_SERVICE_HOST_URL=http://cast_service:8000/api/v1/casts/
-    depends_on:
-      - breeder_db
+    # depends_on:
+    #   - breeder_db
 
-  breeder_db:
-    image: postgres:12.1-alpine
-    volumes:
-      - postgres_data_breeder:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_USER=breeder_db_username
-      - POSTGRES_PASSWORD=breeder_db_password
-      - POSTGRES_DB=breeder_db_dev
+  # breeder_db:
+  #   image: postgres:12.1-alpine
+  #   volumes:
+  #     - postgres_data_breeder:/var/lib/postgresql/data/
+  #   environment:
+  #     - POSTGRES_USER=breeder_db_username
+  #     - POSTGRES_PASSWORD=breeder_db_password
+  #     - POSTGRES_DB=breeder_db_dev
 
   nginx:
     image: nginx:latest
@@ -53,6 +53,6 @@ services:
       # - movie_service
       - breeder_service
 
-volumes:
+# volumes:
   # postgres_data_movie:
-  postgres_data_breeder:
+  # postgres_data_breeder:
