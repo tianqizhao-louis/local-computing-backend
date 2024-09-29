@@ -8,9 +8,9 @@ metadata.create_all(engine)
 app = FastAPI(openapi_url="/api/v1/breeders/openapi.json", docs_url="/api/v1/breeders/docs")
 
 origins = [
-    "http://3.17.156.250",
-    "http://3.17.156.250:5432",
-    "http://3.17.156.250:5432",
+    "http://18.191.212.225",
+    "http://18.191.212.225:5432",
+    "http://18.191.212.225:5432",
     "http://localhost",
     "http://localhost:3000",
 ]
