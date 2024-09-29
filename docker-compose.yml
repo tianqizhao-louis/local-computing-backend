@@ -29,7 +29,7 @@ services:
     ports:
       - 8002:8000
     environment:
-      - DATABASE_URI=postgresql://postgre:localcomputing@localcomputing.cd0o0qwqk673.us-east-2.rds.amazonaws.com:5432/breeder_db_dev
+      - DATABASE_URI=postgresql://postgres:localcomputing@localcomputing.cd0o0qwqk673.us-east-2.rds.amazonaws.com:5432/breeder_db_dev
       # - CAST_SERVICE_HOST_URL=http://cast_service:8000/api/v1/casts/
     depends_on:
       - breeder_db
