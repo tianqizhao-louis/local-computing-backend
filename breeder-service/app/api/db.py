@@ -17,4 +17,14 @@ breeders = Table(
     Column('name', String(50)),
 )
 
-database = Database(DATABASE_URI, min_size=1, max_size=10, connection_options={'statement_cache_size': 0})
+# Custom function to configure asyncpg connection options
+async def configure_connection(connection):
+    await connection.set_statement_cache_size(0)
+
+# Setup for asyncpg with custom connection configuration
+database = Database(DATABASE_URI, min_size=1, max_size=10)
+
+# Configure the database connection to disable statement caching
+async def setup_database():
+    async with database.connection() as connection:
+        await configure_connection(connection)
