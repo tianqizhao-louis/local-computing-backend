@@ -27,7 +27,7 @@ services:
     volumes:
       - ./breeder-service/:/app/
     ports:
-      - 8002:8000
+      - 8000:8000
     environment:
       - DATABASE_URI=${DATABASE_URL}
       # - CAST_SERVICE_HOST_URL=http://cast_service:8000/api/v1/casts/
