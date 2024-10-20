@@ -30,6 +30,7 @@ services:
       - 8000:8000
     environment:
       - DATABASE_URI=${DATABASE_URL}
+      - PYTHONPATH=/app
       # - CAST_SERVICE_HOST_URL=http://cast_service:8000/api/v1/casts/
     depends_on:
       - breeder_db

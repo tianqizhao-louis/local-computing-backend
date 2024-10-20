@@ -48,3 +48,5 @@ coverage.xml
 *.env
 
 .DS_Store
+
+test.db
