@@ -4,7 +4,7 @@ from app.api.db import breeders, database
 
 
 async def add_breeder(payload: BreederIn, breeder_id: str):
-    query = breeders.insert().values(id=breeder_id, **payload.dict())
+    query = breeders.insert().values(id=breeder_id, **payload.model_dump())
 
     return await database.execute(query=query)
 
@@ -37,7 +37,7 @@ async def delete_breeder(id: int):
 
 
 async def update_breeder(id: int, payload: BreederIn):
-    query = breeders.update().where(breeders.c.id == id).values(**payload.dict())
+    query = breeders.update().where(breeders.c.id == id).values(**payload.model_dump())
     return await database.execute(query=query)
 
 

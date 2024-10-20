@@ -159,9 +159,9 @@ async def update_breeder(id: str, payload: BreederUpdate):
     if not breeder:
         raise HTTPException(status_code=404, detail="Breeder not found")
 
-    update_data = payload.dict(exclude_unset=True)
+    update_data = payload.model_dump(exclude_unset=True)
     breeder_in_db = BreederIn(**breeder)
-    updated_breeder = breeder_in_db.copy(update=update_data)
+    updated_breeder = breeder_in_db.model_copy(update=update_data)
 
     await db_manager.update_breeder(id, updated_breeder)
     updated_breeder_in_db = await db_manager.get_breeder(id)
