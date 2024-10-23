@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "movie-service"
+name = "breeder-service"
 version = "0.1.0"
 description = ""
 authors = ["tianqizhao-louis <louiszhao0517@gmail.com>"]
