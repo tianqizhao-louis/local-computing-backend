@@ -11,9 +11,11 @@ from app.api.models import (
 )
 from app.api import db_manager
 import uuid
+import os
 
 breeders = APIRouter()
 bg_tasks: Dict[str, str] = {}
+URL_PREFIX = os.getenv("URL_PREFIX")
 
 
 @breeders.post("/", response_model=BreederOut, status_code=201)
@@ -27,7 +29,7 @@ async def create_breeder(payload: BreederIn, response: Response):
 
     # Add Link header for self and collection navigation
     response.headers["Link"] = (
-        f'<{breeder_url}>; rel="self", </breeders/>; rel="collection"'
+        f'<{breeder_url}>; rel="self", <URL_PREFIX/breeders/>; rel="collection"'
     )
 
     # Include link sections in the response body
@@ -40,7 +42,7 @@ async def create_breeder(payload: BreederIn, response: Response):
         breeder_address=payload.breeder_address,
         links=[
             Link(rel="self", href=breeder_url),
-            Link(rel="collection", href="/breeders/"),
+            Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
         ],
     )
     return response_data
@@ -65,7 +67,7 @@ async def create_breeder_delay(
     background_tasks.add_task(process_breeder_task, breeder_id, payload)
 
     # Generate status URL
-    status_url = f"/task-status/{breeder_id}/"
+    status_url = f"{URL_PREFIX}/task-status/{breeder_id}/"
 
     # Add Link header for status tracking and self navigation
     response.headers["Link"] = f'<{status_url}>; rel="status"'
@@ -79,7 +81,7 @@ async def create_breeder_delay(
         breeder_address=payload.breeder_address,
         status_url=status_url,
         links=[
-            Link(rel="self", href=f"/breeders/{breeder_id}/"),
+            Link(rel="self", href=f"{URL_PREFIX}/breeders/{breeder_id}/"),
             Link(rel="status", href=status_url),
         ],
     )
@@ -103,8 +105,8 @@ async def get_breeders(params: BreederFilterParams = Depends()):
             price_level=record["price_level"],
             breeder_address=record["breeder_address"],
             links=[
-                Link(rel="self", href=f"/breeders/{record['id']}/"),
-                Link(rel="collection", href="/breeders/"),
+                Link(rel="self", href=f"{URL_PREFIX}/breeders/{record['id']}/"),
+                Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
             ],
         )
         for record in db_records
@@ -112,15 +114,15 @@ async def get_breeders(params: BreederFilterParams = Depends()):
 
     # Add Link headers to paginate and return a collection link in response
     links = [
-        Link(rel="self", href="/breeders/"),
-        Link(rel="collection", href="/breeders/"),
+        Link(rel="self", href=f"{URL_PREFIX}/breeders/"),
+        Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
     ]
 
     if params.limit:
         next_offset = params.offset + params.limit
         links.append(
             Link(
-                rel="next", href=f"/breeders/?limit={params.limit}&offset={next_offset}"
+                rel="next", href=f"{URL_PREFIX}/breeders/?limit={params.limit}&offset={next_offset}"
             )
         )
 
@@ -146,8 +148,8 @@ async def get_breeder(id: str):
         price_level=breeder["price_level"],
         breeder_address=breeder["breeder_address"],
         links=[
-            Link(rel="self", href=f"/breeders/{id}/"),
-            Link(rel="collection", href="/breeders/"),
+            Link(rel="self", href=f"{URL_PREFIX}/breeders/{id}/"),
+            Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
         ],
     )
     return response_data
@@ -175,8 +177,8 @@ async def update_breeder(id: str, payload: BreederUpdate):
         price_level=updated_breeder_in_db["price_level"],
         breeder_address=updated_breeder_in_db["breeder_address"],
         links=[
-            Link(rel="self", href=f"/breeders/{id}/"),
-            Link(rel="collection", href="/breeders/"),
+            Link(rel="self", href=f"{URL_PREFIX}/breeders/{id}/"),
+            Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
         ],
     )
     return response_data
@@ -226,4 +228,4 @@ async def process_breeder_task(breeder_id: str, payload: BreederIn):
 
 # Helper function to generate breeder URL
 def generate_breeder_url(breeder_id: str):
-    return f"/breeders/{breeder_id}/"
+    return f"{URL_PREFIX}/breeders/{breeder_id}/"
