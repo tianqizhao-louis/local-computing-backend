@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "movie-service"
+name = "breeder-service"
 version = "0.1.0"
 description = ""
 authors = ["tianqizhao-louis <louiszhao0517@gmail.com>"]
@@ -14,8 +14,15 @@ databases = {extras = ["postgresql"], version = "^0.9.0"}
 sqlalchemy = "^2.0.35"
 httpx = "^0.27.2"
 psycopg2-binary = "^2.9.9"
+pytest = "^8.3.3"
+pytest-asyncio = "^0.24.0"
+aiosqlite = "^0.20.0"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"

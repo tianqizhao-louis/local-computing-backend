@@ -23,19 +23,23 @@ services:
   
   breeder_service:
     build: ./breeder-service
+    container_name: breeder_microservice
     command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     volumes:
       - ./breeder-service/:/app/
     ports:
-      - 8002:8000
+      - 8000:8000
     environment:
       - DATABASE_URI=${DATABASE_URL}
+      - PYTHONPATH=/app
+      - URL_PREFIX=http://localhost:8080/api/v1
       # - CAST_SERVICE_HOST_URL=http://cast_service:8000/api/v1/casts/
     depends_on:
       - breeder_db
 
   breeder_db:
     image: postgres:12.1-alpine
+    container_name: breeder_db
     volumes:
       - postgres_data_breeder:/var/lib/postgresql/data/
     environment:
@@ -45,6 +49,7 @@ services:
 
   nginx:
     image: nginx:latest
+    container_name: breeder_nginx
     ports:
       - "8080:8080"
     volumes:
