@@ -24,7 +24,9 @@ app = FastAPI(
 origins = [
     "http://localhost",
     "http://localhost:3000",
-    "http://34.72.253.184",
+    "http://34.29.2.129", # UI IPv4
+    "http://35.193.234.242", #Composite IPv4
+
 ]
 
 app.add_middleware(
