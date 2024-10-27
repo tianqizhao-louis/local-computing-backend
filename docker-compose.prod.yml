@@ -3,38 +3,38 @@ services:
     build: 
       context: ./breeder-service
       dockerfile: prod.Dockerfile
-    command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app -b 0.0.0.0:8000
-    # volumes:
-    #   - ./breeder-service/:/app/
+    container_name: breeder_microservice
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000  # Uvicorn command with reload for live updates
+    volumes:
+      - ./breeder-service/:/app/   # Volume for live reload
     ports:
-      - 8002:8000
+      - 8000:8000   # Host and container ports set to 8000
     environment:
       - DATABASE_URI=${DATABASE_URL}
       - PYTHONPATH=/app
-      - URL_PREFIX=${URL_PREFIX}
-      # - CAST_SERVICE_HOST_URL=http://cast_service:8000/api/v1/casts/
-    # depends_on:
-    #   - breeder_db
+      - URL_PREFIX=http://localhost:8000/api/v1
+    depends_on:
+      - breeder_db
 
-  # breeder_db:
-  #   image: postgres:12.1-alpine
-  #   volumes:
-  #     - postgres_data_breeder:/var/lib/postgresql/data/
-  #   environment:
-  #     - POSTGRES_USER=breeder_db_username
-  #     - POSTGRES_PASSWORD=breeder_db_password
-  #     - POSTGRES_DB=breeder_db_dev
+  breeder_db:
+    image: postgres:12.1-alpine
+    container_name: breeder_db
+    volumes:
+      - postgres_data_breeder:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=breeder_db_username
+      - POSTGRES_PASSWORD=breeder_db_password
+      - POSTGRES_DB=breeder_db_dev
 
   nginx:
     image: nginx:latest
+    container_name: breeder_nginx
     ports:
       - "8080:8080"
     volumes:
       - ./nginx_config.conf:/etc/nginx/conf.d/default.conf
     depends_on:
-      # - movie_service
       - breeder_service
 
-# volumes:
-  # postgres_data_movie:
-  # postgres_data_breeder:
+volumes:
+  postgres_data_breeder:
