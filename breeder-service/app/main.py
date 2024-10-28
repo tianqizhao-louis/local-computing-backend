@@ -24,8 +24,10 @@ app = FastAPI(
 origins = [
     "http://localhost",
     "http://localhost:3000",
-    "http://34.29.2.129", # UI IPv4
-    "http://35.193.234.242", #Composite IPv4
+    "http://34.29.2.129",
+    "http://35.193.234.242",
+    "http://34.29.2.129:3000", # UI IPv4
+    "http://35.193.234.242:8004", #Composite IPv4
 
 ]
 
