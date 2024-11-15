@@ -30,7 +30,7 @@ services:
     ports:
       - 8000:8000
     environment:
-      - DATABASE_URI=${DATABASE_URL}
+      - DATABASE_URI=${DATABASE_URI}
       - PYTHONPATH=/app
       - URL_PREFIX=http://localhost:8080/api/v1
       # - CAST_SERVICE_HOST_URL=http://cast_service:8000/api/v1/casts/

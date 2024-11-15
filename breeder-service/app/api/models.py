@@ -14,6 +14,7 @@ class BreederIn(BaseModel):
     breeder_country: str
     price_level: str
     breeder_address: str
+    email: str
 
 
 class BreederOut(BreederIn):
@@ -29,6 +30,7 @@ class BreederUpdate(BaseModel):
     breeder_country: Optional[str] = None
     price_level: Optional[str] = None
     breeder_address: Optional[str] = None
+    email: Optional[str] = None
 
 
 class BreederFilterParams(BaseModel):
@@ -46,6 +48,7 @@ class BreederDelayResponse(BaseModel):
     status_url: str
     # Add links field for HATEOAS support
     links: Optional[List[Link]] = None
+    email: str
 
 
 class BreederListResponse(BaseModel):

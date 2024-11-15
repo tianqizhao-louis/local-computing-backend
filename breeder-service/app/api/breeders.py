@@ -40,6 +40,7 @@ async def create_breeder(payload: BreederIn, response: Response):
         breeder_country=payload.breeder_country,
         price_level=payload.price_level,
         breeder_address=payload.breeder_address,
+        email=payload.email,
         links=[
             Link(rel="self", href=breeder_url),
             Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
@@ -80,6 +81,7 @@ async def create_breeder_delay(
         price_level=payload.price_level,
         breeder_address=payload.breeder_address,
         status_url=status_url,
+        email=payload.email,
         links=[
             Link(rel="self", href=f"{URL_PREFIX}/breeders/{breeder_id}/"),
             Link(rel="status", href=status_url),
@@ -104,6 +106,7 @@ async def get_breeders(params: BreederFilterParams = Depends()):
             breeder_country=record["breeder_country"],
             price_level=record["price_level"],
             breeder_address=record["breeder_address"],
+            email=record["email"],
             links=[
                 Link(rel="self", href=f"{URL_PREFIX}/breeders/{record['id']}/"),
                 Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
@@ -147,6 +150,7 @@ async def get_breeder(id: str):
         breeder_country=breeder["breeder_country"],
         price_level=breeder["price_level"],
         breeder_address=breeder["breeder_address"],
+        email=breeder["email"],
         links=[
             Link(rel="self", href=f"{URL_PREFIX}/breeders/{id}/"),
             Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
@@ -176,6 +180,7 @@ async def update_breeder(id: str, payload: BreederUpdate):
         breeder_country=updated_breeder_in_db["breeder_country"],
         price_level=updated_breeder_in_db["price_level"],
         breeder_address=updated_breeder_in_db["breeder_address"],
+        email=updated_breeder_in_db["email"],
         links=[
             Link(rel="self", href=f"{URL_PREFIX}/breeders/{id}/"),
             Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),

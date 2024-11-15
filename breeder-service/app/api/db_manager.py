@@ -3,7 +3,7 @@ from app.api.models import BreederIn, BreederOut
 from app.api.db import breeders, database
 
 
-async def add_breeder(payload: BreederIn, breeder_id: str):
+async def add_breeder(payload: BreederIn, breeder_id):
     query = breeders.insert().values(id=breeder_id, **payload.model_dump())
 
     return await database.execute(query=query)
@@ -31,12 +31,12 @@ async def get_breeder(id):
     return await database.fetch_one(query=query)
 
 
-async def delete_breeder(id: int):
+async def delete_breeder(id):
     query = breeders.delete().where(breeders.c.id == id)
     return await database.execute(query=query)
 
 
-async def update_breeder(id: int, payload: BreederIn):
+async def update_breeder(id, payload: BreederIn):
     query = breeders.update().where(breeders.c.id == id).values(**payload.model_dump())
     return await database.execute(query=query)
 

@@ -37,6 +37,7 @@ breeders = Table(
     metadata,
     Column("id", String(36), primary_key=True),
     Column("name", String(50)),
+    Column("email", String(100)),
     Column("breeder_city", String(100)),
     Column("breeder_country", String(100)),
     Column("price_level", String(50)),

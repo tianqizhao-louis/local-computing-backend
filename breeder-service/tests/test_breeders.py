@@ -24,6 +24,7 @@ def sample_breeder():
         "breeder_country": "Test Country",
         "price_level": "$$$",
         "breeder_address": "123 Test Street",
+        "email": "test@gmail.com",
     }
 
 
@@ -35,6 +36,7 @@ def updated_breeder():
         "breeder_country": "Updated Country",
         "price_level": "$$",
         "breeder_address": "456 Updated Street",
+        "email": "changed@gmail.com",
     }
 
 
@@ -59,6 +61,7 @@ async def test_create_and_get_breeder(test_client, sample_breeder):
     assert data["breeder_country"] == sample_breeder["breeder_country"]
     assert data["price_level"] == sample_breeder["price_level"]
     assert data["breeder_address"] == sample_breeder["breeder_address"]
+    assert data["email"] == sample_breeder["email"]
     assert "id" in data
 
     # Verify it was created
@@ -82,11 +85,10 @@ async def test_update_breeder(test_client, sample_breeder, updated_breeder):
 
     # Update the breeder
     update_response = test_client.put(
-        f"/api/v1/breeders/{breeder_id}", 
-        json=updated_breeder
+        f"/api/v1/breeders/{breeder_id}", json=updated_breeder
     )
     assert update_response.status_code == 200
-    
+
     updated_data = update_response.json()
     assert updated_data["id"] == breeder_id
     assert updated_data["name"] == updated_breeder["name"]
@@ -94,6 +96,7 @@ async def test_update_breeder(test_client, sample_breeder, updated_breeder):
     assert updated_data["breeder_country"] == updated_breeder["breeder_country"]
     assert updated_data["price_level"] == updated_breeder["price_level"]
     assert updated_data["breeder_address"] == updated_breeder["breeder_address"]
+    assert updated_data["email"] == updated_breeder["email"]
 
     # Verify the update
     get_response = test_client.get(f"/api/v1/breeders/{breeder_id}")
@@ -104,10 +107,7 @@ async def test_update_breeder(test_client, sample_breeder, updated_breeder):
 @pytest.mark.asyncio
 async def test_update_breeder_invalid_id(test_client, updated_breeder):
     """Test PUT with invalid breeder ID"""
-    response = test_client.put(
-        "/api/v1/breeders/invalid-id",
-        json=updated_breeder
-    )
+    response = test_client.put("/api/v1/breeders/invalid-id", json=updated_breeder)
     assert response.status_code == 404
 
 
