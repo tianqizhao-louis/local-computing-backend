@@ -125,7 +125,8 @@ async def get_breeders(params: BreederFilterParams = Depends()):
         next_offset = params.offset + params.limit
         links.append(
             Link(
-                rel="next", href=f"{URL_PREFIX}/breeders/?limit={params.limit}&offset={next_offset}"
+                rel="next",
+                href=f"{URL_PREFIX}/breeders/?limit={params.limit}&offset={next_offset}",
             )
         )
 
@@ -234,3 +235,29 @@ async def process_breeder_task(breeder_id: str, payload: BreederIn):
 # Helper function to generate breeder URL
 def generate_breeder_url(breeder_id: str):
     return f"{URL_PREFIX}/breeders/{breeder_id}/"
+
+
+# Non-CRUD operations
+
+
+@breeders.get("/email/{email}/", response_model=BreederOut, status_code=200)
+async def get_breeder_by_email(email: str):
+    breeder = await db_manager.get_breeder_by_email(email)
+
+    if not breeder:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    response_data = BreederOut(
+        id=breeder["id"],
+        name=breeder["name"],
+        breeder_city=breeder["breeder_city"],
+        breeder_country=breeder["breeder_country"],
+        price_level=breeder["price_level"],
+        breeder_address=breeder["breeder_address"],
+        email=breeder["email"],
+        links=[
+            Link(rel="self", href=f"{URL_PREFIX}/breeders/{breeder['id']}/"),
+            Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
+        ],
+    )
+    return response_data

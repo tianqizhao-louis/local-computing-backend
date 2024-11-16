@@ -44,3 +44,11 @@ async def update_breeder(id, payload: BreederIn):
 async def delete_all_breeders():
     query = breeders.delete()  # This will delete all records from the breeders table
     return await database.execute(query=query)
+
+
+# Non-CRUD operations
+
+
+async def get_breeder_by_email(email: str):
+    query = breeders.select().where(breeders.c.email == email)
+    return await database.fetch_one(query=query)
