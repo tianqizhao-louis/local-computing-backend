@@ -24,12 +24,16 @@ def generate_dummy_breeder():
     # Generate a random breeder address
     breeder_address = f"{random.randint(1, 999)} {''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase, k=10))} Street"
 
+    # Add email field to satisfy API requirements
+    breeder_email = f"{name.lower()}@example.com"
+
     return {
         "name": name,
         "breeder_city": breeder_city,
         "breeder_country": breeder_country,
         "price_level": price_level,
-        "breeder_address": breeder_address
+        "breeder_address": breeder_address,
+        "email": breeder_email
     }
 
 # Loop to add 20 dummy data
@@ -44,3 +48,8 @@ for _ in range(20):
         print(f"Successfully added breeder: {dummy_breeder['name']}")
     else:
         print(f"Failed to add breeder: {dummy_breeder['name']} - Status Code: {response.status_code}")
+        try:
+            # Log the response text for more details on the failure
+            print(f"Response: {response.text}")
+        except Exception as e:
+            print(f"Error while reading response text: {e}")
