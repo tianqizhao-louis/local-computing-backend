@@ -46,6 +46,8 @@ services:
       - POSTGRES_USER=breeder_db_username
       - POSTGRES_PASSWORD=breeder_db_password
       - POSTGRES_DB=breeder_db_dev
+    ports:
+      - "5432:5432"
 
   nginx:
     image: nginx:latest
