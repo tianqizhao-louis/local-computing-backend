@@ -16,6 +16,9 @@ services:
       - REQUEST_TOPIC=breeder-info-request
       - RESPONSE_TOPIC=breeder-info-response
       - REQUEST_SUBSCRIPTION_NAME=breeder-info-request-sub
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
     depends_on:
       - breeder_db
 

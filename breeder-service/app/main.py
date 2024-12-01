@@ -6,6 +6,8 @@ from app.api.middleware import LoggingMiddleware
 from contextlib import asynccontextmanager
 from gcloud.aio.pubsub import PublisherClient, SubscriberClient, PubsubMessage
 from app.api import db_manager
+from app.api.auth import auth
+from app.api.middleware import JWTMiddleware
 
 import asyncio
 import json
@@ -137,5 +139,7 @@ app.add_middleware(
 )
 
 app.add_middleware(LoggingMiddleware)
+app.add_middleware(JWTMiddleware, excluded_paths=["/api/v1/auth"])
 
 app.include_router(breeders, prefix="/api/v1/breeders", tags=["breeders"])
+app.include_router(auth, prefix="/api/v1/auth", tags=["auth"])
