@@ -139,7 +139,7 @@ app.add_middleware(
 )
 
 app.add_middleware(LoggingMiddleware)
-app.add_middleware(JWTMiddleware, excluded_paths=["/api/v1/auth"])
+app.add_middleware(JWTMiddleware, excluded_paths=["/api/v1/auth", "/api/v1/breeders/openapi.json", "/api/v1/breeders/docs"])
 
 app.include_router(breeders, prefix="/api/v1/breeders", tags=["breeders"])
 app.include_router(auth, prefix="/api/v1/auth", tags=["auth"])

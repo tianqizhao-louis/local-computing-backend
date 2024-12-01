@@ -51,6 +51,47 @@ async def create_breeder(payload: BreederIn, response: Response):
     return response_data
 
 
+@breeders.post("/delay/", response_model=BreederDelayResponse, status_code=202)
+async def create_breeder_delay(
+    payload: BreederIn, background_tasks: BackgroundTasks, response: Response
+):
+    """
+    This endpoint is used to simulate a slow response from the server.
+    The response status code is 202 (Accepted) to indicate that the request has been
+    accepted for processing, but the processing has not been completed yet.
+    """
+    if all(each_status == "completed" for each_status in bg_tasks.values()):
+        bg_tasks.clear()
+
+    breeder_id = str(uuid.uuid4())
+    bg_tasks[breeder_id] = "pending"
+
+    # Add the background task to be processed asynchronously
+    background_tasks.add_task(process_breeder_task, breeder_id, payload)
+
+    # Generate status URL
+    status_url = f"/task-status/{breeder_id}/"
+
+    # Add Link header for status tracking and self navigation
+    response.headers["Link"] = f'<{status_url}>; rel="status"'
+
+    # Response with status tracking link
+    response_data = BreederDelayResponse(
+        name=payload.name,
+        breeder_city=payload.breeder_city,
+        breeder_country=payload.breeder_country,
+        price_level=payload.price_level,
+        breeder_address=payload.breeder_address,
+        email=payload.email,
+        status_url=status_url,
+        links=[
+            Link(rel="self", href=f"/breeders/{breeder_id}/"),
+            Link(rel="status", href=status_url),
+        ],
+    )
+    return response_data
+
+
 @breeders.post("/{breeder_id}/pets/", response_model=PetOut, status_code=201)
 async def add_pet_to_breeder(breeder_id: str, payload: PetIn, response: Response):
     breeder = await db_manager.get_breeder(breeder_id)
@@ -223,15 +264,6 @@ async def delete_all_breeders():
         )
 
 
-@breeders.get("/task-status/{task_id}")
-async def get_task_status(task_id: str):
-    if task_id not in bg_tasks:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    # Return the current status of the task
-    return {"task_id": task_id, "status": bg_tasks[task_id]}
-
-
 # Helper function to generate breeder URL
 def generate_breeder_url(breeder_id: str):
     return f"{URL_PREFIX}/breeders/{breeder_id}/"
@@ -258,3 +290,28 @@ async def get_breeder_by_email(email: str):
         ],
     )
     return response_data
+
+
+@breeders.get("/task-status/{task_id}")
+async def get_task_status(task_id: str):
+    if task_id not in bg_tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # Return the current status of the task
+    return {"task_id": task_id, "status": bg_tasks[task_id]}
+
+
+# Non-CRUD operations
+async def process_breeder_task(breeder_id: str, payload: BreederIn):
+    import asyncio  # Import asyncio for asynchronous sleep
+
+    await asyncio.sleep(30)  # Non-blocking sleep
+
+    await db_manager.add_breeder(payload, breeder_id=breeder_id)
+    # Update task status to "completed" after processing
+    bg_tasks[breeder_id] = "completed"
+
+
+# Helper function to generate breeder URL
+def generate_breeder_url(breeder_id: str):
+    return f"/breeders/{breeder_id}/"
