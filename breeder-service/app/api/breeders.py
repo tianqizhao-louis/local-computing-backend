@@ -12,6 +12,7 @@ from app.api.models import (
     PetOut,
 )
 from app.api import db_manager
+from app.api.middleware import get_correlation_id, logger
 import uuid
 import os
 
@@ -144,6 +145,8 @@ async def get_pets_for_breeder(breeder_id: str):
 
 @breeders.get("/", response_model=BreederListResponse)
 async def get_breeders(params: BreederFilterParams = Depends()):
+    cor_id = get_correlation_id()
+    logger.info(f"[{cor_id}] Processing root request")
     # Fetching database records
     db_records = await db_manager.get_all_breeders(
         limit=params.limit, offset=params.offset, breeder_city=params.breeder_city
@@ -315,3 +318,15 @@ async def process_breeder_task(breeder_id: str, payload: BreederIn):
 # Helper function to generate breeder URL
 def generate_breeder_url(breeder_id: str):
     return f"/breeders/{breeder_id}/"
+
+
+
+# To propagate the correlation ID to external services, include it in your HTTP client headers:
+# pythonCopyimport httpx
+# from .middleware import get_correlation_id
+
+# async def call_external_service():
+#     headers = {"X-Correlation-ID": get_correlation_id()}
+#     async with httpx.AsyncClient() as client:
+#         response = await client.get("https://api.example.com", headers=headers)
+#     return response

@@ -2,12 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.breeders import breeders
 from app.api.db import metadata, database, engine, initialize_database, cleanup
-from app.api.middleware import LoggingMiddleware
+from app.api.middleware import LoggingMiddleware, JWTMiddleware
 from contextlib import asynccontextmanager
 from gcloud.aio.pubsub import PublisherClient, SubscriberClient, PubsubMessage
 from app.api import db_manager
 from app.api.auth import auth
-from app.api.middleware import JWTMiddleware
 
 import asyncio
 import json
@@ -19,7 +18,6 @@ import logging
 async def lifespan(app):
     # Initialize the database connection
     await initialize_database()
-
     # Set up Pub/Sub configurations
     project_name = os.getenv("GCP_PROJECT_ID")
     request_subscription_name = os.getenv("REQUEST_SUBSCRIPTION_NAME")
@@ -137,9 +135,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 app.add_middleware(LoggingMiddleware)
-app.add_middleware(JWTMiddleware, excluded_paths=["/api/v1/auth", "/api/v1/breeders/openapi.json", "/api/v1/breeders/docs"])
+app.add_middleware(
+    JWTMiddleware,
+    excluded_paths=[
+        "/api/v1/auth",
+        "/api/v1/breeders/openapi.json",
+        "/api/v1/breeders/docs",
+    ],
+)
 
 app.include_router(breeders, prefix="/api/v1/breeders", tags=["breeders"])
 app.include_router(auth, prefix="/api/v1/auth", tags=["auth"])

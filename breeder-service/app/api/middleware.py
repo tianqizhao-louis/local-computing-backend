@@ -2,32 +2,47 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 import logging
 import time
+import uuid
 from fastapi import Request
 from app.api.auth import verify_jwt_token
 from fastapi.exceptions import HTTPException
+from contextvars import ContextVar
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("breeder-service")
 
+correlation_id = ContextVar("correlation_id", default=None)
+
+
+def get_correlation_id() -> str:
+    """Helper function to get current correlation ID"""
+    return correlation_id.get()
+
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # Log before the request is processed
-        logger.info(f"Request started: {request.method} {request.url}")
+        # Get or generate correlation ID
+        cor_id = request.headers.get("X-Correlation-ID", str(uuid.uuid4()))
+        correlation_id.set(cor_id)
+        request.state.correlation_id = cor_id
 
-        # Log query parameters (for debugging purposes)
-        logger.info(f"Query parameters: {request.query_params}")
+        # Log request details with correlation ID
+        logger.info(f"[{cor_id}] Request started: {request.method} {request.url}")
+        logger.info(f"[{cor_id}] Query parameters: {request.query_params}")
 
         start_time = time.time()
 
-        # Call the next middleware or route handler
+        # Process request
         response = await call_next(request)
 
-        # Log after the response is generated
+        # Log response details with correlation ID and timing
         process_time = time.time() - start_time
         logger.info(
-            f"Request completed in {process_time:.4f} seconds with status code {response.status_code}"
+            f"[{cor_id}] Request completed in {process_time:.4f} seconds with status code {response.status_code}"
         )
+
+        # Add correlation ID to response headers
+        response.headers["X-Correlation-ID"] = cor_id
 
         return response
 
