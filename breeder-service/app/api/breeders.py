@@ -1,5 +1,12 @@
 from typing import List, Dict
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Response
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Depends,
+    BackgroundTasks,
+    Response,
+    Request,
+)
 from app.api.models import (
     BreederOut,
     BreederIn,
@@ -13,8 +20,10 @@ from app.api.models import (
 )
 from app.api import db_manager
 from app.api.middleware import get_correlation_id, logger
+from app.config import settings
 import uuid
 import os
+import httpx
 
 breeders = APIRouter()
 bg_tasks: Dict[str, str] = {}
@@ -94,14 +103,47 @@ async def create_breeder_delay(
 
 
 @breeders.post("/{breeder_id}/pets/", response_model=PetOut, status_code=201)
-async def add_pet_to_breeder(breeder_id: str, payload: PetIn, response: Response):
+async def add_pet_to_breeder(breeder_id: str, payload: PetIn, request: Request):
     breeder = await db_manager.get_breeder(breeder_id)
     if not breeder:
         raise HTTPException(status_code=404, detail="Breeder not found")
 
     pet_id = str(uuid.uuid4())  # Generate unique ID for the pet
     try:
-        pet_data = await db_manager.add_pet(payload, breeder_id, pet_id)
+        # pet_data = await db_manager.add_pet(payload, breeder_id, pet_id)
+        async with httpx.AsyncClient() as client:
+            data = {
+                "id": pet_id,
+                "breeder_id": breeder_id,
+                "name": payload.name,
+                "type": payload.type,
+                "price": payload.price,
+                "image_url": payload.image_url,
+            }
+            url = f"{settings.PET_SERVICE_URL}/"
+
+            # Detailed logging for the request
+            logger.info(f"Sending POST request to {url} with payload: {data}")
+
+            headers = {
+                "X-Correlation-ID": get_correlation_id(),
+                "Authorization": f"{request.headers.get('Authorization')}",
+            }
+
+            try:
+                response = await client.post(url, json=data, headers=headers)
+                logger.info(
+                    f"Received response: status_code={response.status_code}, response_body={response.text}"
+                )
+                response.raise_for_status()
+            except httpx.HTTPStatusError as http_err:
+                logger.error(
+                    f"HTTP error occurred: status_code={http_err.response.status_code}, response_body={http_err.response.text}"
+                )
+                raise Exception(f"Failed to add pet: {http_err.response.text}")
+            except Exception as err:
+                logger.error(f"An unexpected error occurred: {str(err)}")
+                raise Exception(f"Failed to add pet: {str(err)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to add pet: {str(e)}")
 
@@ -120,13 +162,38 @@ async def add_pet_to_breeder(breeder_id: str, payload: PetIn, response: Response
 
 
 @breeders.get("/{breeder_id}/pets/", response_model=List[PetOut], status_code=200)
-async def get_pets_for_breeder(breeder_id: str):
+async def get_pets_for_breeder(breeder_id: str, request: Request):
     breeder = await db_manager.get_breeder(breeder_id)
     if not breeder:
         raise HTTPException(status_code=404, detail="Breeder not found")
 
     try:
-        pets = await db_manager.get_pets_for_breeder(breeder_id)
+        # pets = await db_manager.get_pets_for_breeder(breeder_id)
+        async with httpx.AsyncClient() as client:
+            url = f"{settings.PET_SERVICE_URL}/breeder/{breeder_id}/"
+            logger.info(f"Sending GET request to {url}")
+            headers = {
+                "X-Correlation-ID": get_correlation_id(),
+                "Authorization": f"{request.headers.get('Authorization')}",
+            }
+            try:
+                response = await client.get(url, headers=headers)
+                logger.info(
+                    f"Received response: status_code={response.status_code}, response_body={response.text}"
+                )
+                response.raise_for_status()
+                pets = response.json()
+            except httpx.HTTPStatusError as http_err:
+                logger.error(
+                    f"HTTP error occurred: status_code={http_err.response.status_code}, response_body={http_err.response.text}"
+                )
+                raise Exception(
+                    f"Failed to fetch pets for breeder: {http_err.response.text}"
+                )
+            except Exception as err:
+                logger.error(f"An unexpected error occurred: {str(err)}")
+                raise Exception(f"Failed to fetch pets for breeder: {str(err)}")
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch pets: {str(e)}")
 
@@ -318,7 +385,6 @@ async def process_breeder_task(breeder_id: str, payload: BreederIn):
 # Helper function to generate breeder URL
 def generate_breeder_url(breeder_id: str):
     return f"/breeders/{breeder_id}/"
-
 
 
 # To propagate the correlation ID to external services, include it in your HTTP client headers:

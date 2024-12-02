@@ -17,6 +17,8 @@ class Settings(BaseSettings):
         os.getenv("JWT_REFRESH_SECRET"), env="JWT_REFRESH_SECRET"
     )
 
+    PET_SERVICE_URL: str = Field(os.getenv("PET_SERVICE_URL"), env="PET_SERVICE_URL")
+
     # Database settings
     # DATABASE_URL: str = Field(os.getenv(""), env="DATABASE_URL")
 
