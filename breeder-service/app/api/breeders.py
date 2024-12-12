@@ -1,5 +1,12 @@
 from typing import List, Dict
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Response
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Depends,
+    BackgroundTasks,
+    Response,
+    Request,
+)
 from app.api.models import (
     BreederOut,
     BreederIn,
@@ -8,10 +15,15 @@ from app.api.models import (
     BreederDelayResponse,
     Link,
     BreederListResponse,
+    PetIn,
+    PetOut,
 )
 from app.api import db_manager
+from app.api.middleware import get_correlation_id, logger
+from app.config import settings
 import uuid
 import os
+import httpx
 
 breeders = APIRouter()
 bg_tasks: Dict[str, str] = {}
@@ -29,7 +41,7 @@ async def create_breeder(payload: BreederIn, response: Response):
 
     # Add Link header for self and collection navigation
     response.headers["Link"] = (
-        f'<{breeder_url}>; rel="self", <URL_PREFIX/breeders/>; rel="collection"'
+        f'<{breeder_url}>; rel="self", <{URL_PREFIX}/breeders/>; rel="collection"'
     )
 
     # Include link sections in the response body
@@ -40,6 +52,7 @@ async def create_breeder(payload: BreederIn, response: Response):
         breeder_country=payload.breeder_country,
         price_level=payload.price_level,
         breeder_address=payload.breeder_address,
+        email=payload.email,
         links=[
             Link(rel="self", href=breeder_url),
             Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
@@ -67,7 +80,7 @@ async def create_breeder_delay(
     background_tasks.add_task(process_breeder_task, breeder_id, payload)
 
     # Generate status URL
-    status_url = f"{URL_PREFIX}/task-status/{breeder_id}/"
+    status_url = f"/task-status/{breeder_id}/"
 
     # Add Link header for status tracking and self navigation
     response.headers["Link"] = f'<{status_url}>; rel="status"'
@@ -79,17 +92,128 @@ async def create_breeder_delay(
         breeder_country=payload.breeder_country,
         price_level=payload.price_level,
         breeder_address=payload.breeder_address,
+        email=payload.email,
         status_url=status_url,
         links=[
-            Link(rel="self", href=f"{URL_PREFIX}/breeders/{breeder_id}/"),
+            Link(rel="self", href=f"/breeders/{breeder_id}/"),
             Link(rel="status", href=status_url),
         ],
     )
     return response_data
 
 
+@breeders.post("/{breeder_id}/pets/", response_model=PetOut, status_code=201)
+async def add_pet_to_breeder(breeder_id: str, payload: PetIn, request: Request):
+    breeder = await db_manager.get_breeder(breeder_id)
+    if not breeder:
+        raise HTTPException(status_code=404, detail="Breeder not found")
+
+    pet_id = str(uuid.uuid4())  # Generate unique ID for the pet
+    try:
+        # pet_data = await db_manager.add_pet(payload, breeder_id, pet_id)
+        async with httpx.AsyncClient() as client:
+            data = {
+                "id": pet_id,
+                "breeder_id": breeder_id,
+                "name": payload.name,
+                "type": payload.type,
+                "price": payload.price,
+                "image_url": payload.image_url,
+            }
+            url = f"{settings.PET_SERVICE_URL}/"
+
+            # Detailed logging for the request
+            logger.info(f"Sending POST request to {url} with payload: {data}")
+
+            headers = {
+                "X-Correlation-ID": get_correlation_id(),
+                "Authorization": f"{request.headers.get('Authorization')}",
+            }
+
+            try:
+                response = await client.post(url, json=data, headers=headers)
+                logger.info(
+                    f"Received response: status_code={response.status_code}, response_body={response.text}"
+                )
+                response.raise_for_status()
+            except httpx.HTTPStatusError as http_err:
+                logger.error(
+                    f"HTTP error occurred: status_code={http_err.response.status_code}, response_body={http_err.response.text}"
+                )
+                raise Exception(f"Failed to add pet: {http_err.response.text}")
+            except Exception as err:
+                logger.error(f"An unexpected error occurred: {str(err)}")
+                raise Exception(f"Failed to add pet: {str(err)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to add pet: {str(e)}")
+
+    pet_url = f"{URL_PREFIX}/breeders/{breeder_id}/pets/{pet_id}"
+    response.headers["Location"] = pet_url
+
+    response_data = PetOut(
+        id=pet_id,
+        breeder_id=breeder_id,
+        name=payload.name,
+        type=payload.type,
+        price=payload.price,
+        image_url=payload.image_url,
+    )
+    return response_data
+
+
+@breeders.get("/{breeder_id}/pets/", response_model=List[PetOut], status_code=200)
+async def get_pets_for_breeder(breeder_id: str, request: Request):
+    breeder = await db_manager.get_breeder(breeder_id)
+    if not breeder:
+        raise HTTPException(status_code=404, detail="Breeder not found")
+
+    try:
+        # pets = await db_manager.get_pets_for_breeder(breeder_id)
+        async with httpx.AsyncClient() as client:
+            url = f"{settings.PET_SERVICE_URL}/breeder/{breeder_id}/"
+            logger.info(f"Sending GET request to {url}")
+            headers = {
+                "X-Correlation-ID": get_correlation_id(),
+                "Authorization": f"{request.headers.get('Authorization')}",
+            }
+            try:
+                response = await client.get(url, headers=headers)
+                logger.info(
+                    f"Received response: status_code={response.status_code}, response_body={response.text}"
+                )
+                response.raise_for_status()
+                pets = response.json()
+            except httpx.HTTPStatusError as http_err:
+                logger.error(
+                    f"HTTP error occurred: status_code={http_err.response.status_code}, response_body={http_err.response.text}"
+                )
+                raise Exception(
+                    f"Failed to fetch pets for breeder: {http_err.response.text}"
+                )
+            except Exception as err:
+                logger.error(f"An unexpected error occurred: {str(err)}")
+                raise Exception(f"Failed to fetch pets for breeder: {str(err)}")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch pets: {str(e)}")
+
+    return [
+        PetOut(
+            id=pet["id"],
+            breeder_id=pet["breeder_id"],
+            name=pet["name"],
+            type=pet["type"],
+            price=pet.get("price"),
+            image_url=pet.get("image_url"),
+        )
+        for pet in pets
+    ]
+
+
 @breeders.get("/", response_model=BreederListResponse)
 async def get_breeders(params: BreederFilterParams = Depends()):
+    cor_id = get_correlation_id()
+    logger.info(f"[{cor_id}] Processing root request")
     # Fetching database records
     db_records = await db_manager.get_all_breeders(
         limit=params.limit, offset=params.offset, breeder_city=params.breeder_city
@@ -104,6 +228,7 @@ async def get_breeders(params: BreederFilterParams = Depends()):
             breeder_country=record["breeder_country"],
             price_level=record["price_level"],
             breeder_address=record["breeder_address"],
+            email=record["email"],
             links=[
                 Link(rel="self", href=f"{URL_PREFIX}/breeders/{record['id']}/"),
                 Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
@@ -122,7 +247,8 @@ async def get_breeders(params: BreederFilterParams = Depends()):
         next_offset = params.offset + params.limit
         links.append(
             Link(
-                rel="next", href=f"{URL_PREFIX}/breeders/?limit={params.limit}&offset={next_offset}"
+                rel="next",
+                href=f"{URL_PREFIX}/breeders/?limit={params.limit}&offset={next_offset}",
             )
         )
 
@@ -147,6 +273,7 @@ async def get_breeder(id: str):
         breeder_country=breeder["breeder_country"],
         price_level=breeder["price_level"],
         breeder_address=breeder["breeder_address"],
+        email=breeder["email"],
         links=[
             Link(rel="self", href=f"{URL_PREFIX}/breeders/{id}/"),
             Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
@@ -176,6 +303,7 @@ async def update_breeder(id: str, payload: BreederUpdate):
         breeder_country=updated_breeder_in_db["breeder_country"],
         price_level=updated_breeder_in_db["price_level"],
         breeder_address=updated_breeder_in_db["breeder_address"],
+        email=updated_breeder_in_db["email"],
         links=[
             Link(rel="self", href=f"{URL_PREFIX}/breeders/{id}/"),
             Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
@@ -206,6 +334,34 @@ async def delete_all_breeders():
         )
 
 
+# Helper function to generate breeder URL
+def generate_breeder_url(breeder_id: str):
+    return f"{URL_PREFIX}/breeders/{breeder_id}/"
+
+
+@breeders.get("/email/{email}/", response_model=BreederOut, status_code=200)
+async def get_breeder_by_email(email: str):
+    breeder = await db_manager.get_breeder_by_email(email)
+
+    if not breeder:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    response_data = BreederOut(
+        id=breeder["id"],
+        name=breeder["name"],
+        breeder_city=breeder["breeder_city"],
+        breeder_country=breeder["breeder_country"],
+        price_level=breeder["price_level"],
+        breeder_address=breeder["breeder_address"],
+        email=breeder["email"],
+        links=[
+            Link(rel="self", href=f"{URL_PREFIX}/breeders/{breeder['id']}/"),
+            Link(rel="collection", href=f"{URL_PREFIX}/breeders/"),
+        ],
+    )
+    return response_data
+
+
 @breeders.get("/task-status/{task_id}")
 async def get_task_status(task_id: str):
     if task_id not in bg_tasks:
@@ -228,4 +384,15 @@ async def process_breeder_task(breeder_id: str, payload: BreederIn):
 
 # Helper function to generate breeder URL
 def generate_breeder_url(breeder_id: str):
-    return f"{URL_PREFIX}/breeders/{breeder_id}/"
+    return f"/breeders/{breeder_id}/"
+
+
+# To propagate the correlation ID to external services, include it in your HTTP client headers:
+# pythonCopyimport httpx
+# from .middleware import get_correlation_id
+
+# async def call_external_service():
+#     headers = {"X-Correlation-ID": get_correlation_id()}
+#     async with httpx.AsyncClient() as client:
+#         response = await client.get("https://api.example.com", headers=headers)
+#     return response

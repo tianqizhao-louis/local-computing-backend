@@ -73,9 +73,14 @@ WORKDIR /app
 
 
 # `production` image used for runtime
-# FROM python-base as production
-# # ENV FASTAPI_ENV=production
-# COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
-# COPY . /app/
-# WORKDIR /app
-# CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "main:app"]
+FROM python-base AS production
+ENV FASTAPI_ENV=production
+COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
+COPY . /app/
+
+ENV PYTHONPATH=/app
+
+EXPOSE 8080
+
+WORKDIR /app
+CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "-b", "0.0.0.0:8080"]

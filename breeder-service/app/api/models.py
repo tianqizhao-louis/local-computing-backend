@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
+# Existing models
 
 # Model to represent a hypermedia link
 class Link(BaseModel):
@@ -14,21 +15,21 @@ class BreederIn(BaseModel):
     breeder_country: str
     price_level: str
     breeder_address: str
+    email: str
 
 
 class BreederOut(BreederIn):
     id: str
-    # Add links field to support the HATEOAS concept
     links: Optional[List[Link]] = None
 
 
 class BreederUpdate(BaseModel):
-    # Allow partial updates with optional fields
     name: Optional[str] = None
     breeder_city: Optional[str] = None
     breeder_country: Optional[str] = None
     price_level: Optional[str] = None
     breeder_address: Optional[str] = None
+    email: Optional[str] = None
 
 
 class BreederFilterParams(BaseModel):
@@ -44,10 +45,23 @@ class BreederDelayResponse(BaseModel):
     price_level: str
     breeder_address: str
     status_url: str
-    # Add links field for HATEOAS support
     links: Optional[List[Link]] = None
+    email: str
 
 
 class BreederListResponse(BaseModel):
     data: List[BreederOut]
     links: Optional[List[Link]] = None
+
+# New models for Pets
+
+class PetIn(BaseModel):
+    name: str
+    type: str
+    price: Optional[float] = None
+    image_url: Optional[str] = None
+
+class PetOut(PetIn):
+    id: str
+    breeder_id: str
+
