@@ -20,6 +20,7 @@ services:
       - JWT_ALGORITHM=${JWT_ALGORITHM}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - PET_SERVICE_URL=http://host.docker.internal:8082/api/v1/pets
+      
     depends_on:
       - breeder_db
 
