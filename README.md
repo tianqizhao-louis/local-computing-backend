@@ -28,7 +28,25 @@ JWT_REFRESH_SECRET=<ENV>
 CAT_API_KEY=<ENV>
 ```
 
-##### Step 3: Activate Docker on Desktop
+#### Step 3: Set up private-pubsub.json
+To allow breeder receive email notification, we need to set up a private-pubsub.json
+```bash
+{
+  "type": <TYPE>,
+  "project_id": <PROJECT_ID>,
+  "private_key_id": <PRIVATE_KEY_ID>,
+  "private_key": <Private_Key>,
+  "client_email": <Client_email>,
+  "client_id": <Client>,
+  "auth_uri": <Auth_uri>,
+  "token_uri": <Token_uri>,
+  "auth_provider_x509_cert_url": <Auth_URL>,
+  "client_x509_cert_url": <Client_URL>,
+  "universe_domain": "googleapis.com"
+}
+```
+
+##### Step 4: Activate Docker on Desktop
 
 run the docker container:
 
@@ -36,58 +54,11 @@ run the docker container:
 ./build.sh
 ```
 
-The breeder service will run on http://localhost:8082/api/v1/pets
+The breeder service will run on http://localhost:8080/api/v1/breeders
 
 ### 2. Deploy to GCP
 
-#### Option 1. Deploy directly to a VM
-
-##### Step 1: Set up VM on GCP
-
-Create a cloud engine on GCP
-SSH into the VM, git clone current repo
-
-##### Step 2: Run directly on VM
-
-To run mannually, please run the following step by step:
-
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-cd breeder-service
-poetry install --only main
-
-//activate the virtual env poetry created
-source /path/for/the/virtual/env/activate
-export PYTHONUNBUFFERED=1
-export PYTHONDONTWRITEBYTECODE=1
-export PIP_NO_CACHE_DIR=off
-export PIP_DISABLE_PIP_VERSION_CHECK=on
-export PIP_DEFAULT_TIMEOUT=100
-export POETRY_VERSION=1.4.1
-export POETRY_HOME="/opt/poetry"
-export POETRY_VIRTUALENVS_IN_PROJECT=true
-export POETRY_NO_INTERACTION=1
-export PYSETUP_PATH="/opt/pysetup"
-export VENV_PATH="/opt/pysetup/.venv"
-export PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
-export PYTHONPATH="/app"
-export DEP_DATABASE_URI="<ENV>"
-export DATABASE_URI="<ENV>"
-export URL_PREFIX="<ENV>"
-export DB_USER="<ENV>"
-export DB_PASS="<ENV>"
-export DB_NAME="<ENV>"
-export JWT_SECRET_KEY="<ENV>"
-export JWT_ALGORITHM="<ENV>"
-export JWT_REFRESH_SECRET="<ENV>"
-export CAT_API_KEY="<ENV>"
-export FASTAPI_ENV="production"
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8082
-```
-
-Then the breeder service will run on http://external-ipv4:8082/api/v1/pets
-
-#### Option 2. Deploy through docker container
+#### Option 1. Deploy through docker container
 
 ##### Step 1: Step 1: Create an `prod.env` File
 
@@ -117,7 +88,25 @@ CAT_API_KEY=<ENV>
 
 ```
 
-##### Step 3: Activate Docker on Desktop
+##### Step 3: Set up private-pubsub.json
+To allow breeder receive email notification, we need to set up a private-pubsub.json
+```bash
+{
+  "type": <TYPE>,
+  "project_id": <PROJECT_ID>,
+  "private_key_id": <PRIVATE_KEY_ID>,
+  "private_key": <Private_Key>,
+  "client_email": <Client_email>,
+  "client_id": <Client>,
+  "auth_uri": <Auth_uri>,
+  "token_uri": <Token_uri>,
+  "auth_provider_x509_cert_url": <Auth_URL>,
+  "client_x509_cert_url": <Client_URL>,
+  "universe_domain": "googleapis.com"
+}
+```
+
+##### Step 4: Activate Docker on Desktop
 
 run the docker container:
 
@@ -125,4 +114,4 @@ run the docker container:
 docker-compose -f docker-compose.prod.yml --env-file prod.env up --build -d
 ```
 
-The breeder service will run on http://external-ipv4:8082/api/v1/pets
+The breeder service will run on http://external-ipv4:8080/api/v1/breeders
