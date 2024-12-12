@@ -29,7 +29,7 @@ CAT_API_KEY=<ENV>
 ```
 
 #### Step 3: Set up private-pubsub.json
-To allow breeder receive email notification, we need to set up a private-pubsub.json
+To allow breeder receive email notification, we need to set up a private-pubsub.json under breeder-service/app
 ```bash
 {
   "type": <TYPE>,
@@ -46,7 +46,7 @@ To allow breeder receive email notification, we need to set up a private-pubsub.
 }
 ```
 
-##### Step 4: Activate Docker on Desktop
+#### Step 4: Activate Docker on Desktop
 
 run the docker container:
 
@@ -60,7 +60,7 @@ The breeder service will run on http://localhost:8080/api/v1/breeders
 
 #### Option 1. Deploy through docker container
 
-##### Step 1: Step 1: Create an `prod.env` File
+##### Step 1: Create an `prod.env` File
 
 Create an environment file to store your configuration variables:
 
@@ -84,7 +84,6 @@ INSTANCE_CONNECTION_NAME=<ENV>
 JWT_SECRET_KEY=<ENV>
 JWT_ALGORITHM=<ENV>
 JWT_REFRESH_SECRET=<ENV>
-CAT_API_KEY=<ENV>
 
 ```
 
